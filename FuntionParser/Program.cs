@@ -42,6 +42,7 @@ namespace FuntionParser
         {
             string someChars = "";
             List<string> result = new List<string>();
+            char last = '1';
             foreach (char c in expression)
             {            
                 if (!op.Contains(c))
@@ -53,7 +54,10 @@ namespace FuntionParser
                     result.Add(someChars);
                     someChars = "";
                 }
+                last = c;
             }
+            if (op.Contains(last)) throw new FormatException("Last symbol was an operator!");
+            else result.Add(someChars);
             return result;
         }
     }
