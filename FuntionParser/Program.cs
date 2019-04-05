@@ -7,44 +7,9 @@ using System.Threading.Tasks;
 namespace FuntionParser
 {
     class Program
-    {
-        public struct Tree
-        {
-            public int left_child;
-            public int right_child;
-            public string value;
-            public int parent;
-            public void Init(int left_child, int right_child, string value, int parent)
-            {
-                this.left_child = left_child;
-                this.right_child = right_child;
-                this.value = value;
-                this.parent = parent;
-            }
-            /*public void Default()
-            {
-                this.left_child = -1;
-                this.right_child = -1;
-                this.parent = -1;
-                this.value = "";
-            }*/
-        }
-        /*static void Create(int n, int i, Tree[] a)
-        {
-            int k = 0;
-            for (int j = 0; j < 100; j++)
-            {
-                if (a[j].left_child == 0 && a[j].right_child == 0 && a[j].parent == 0) { k = j; break; }
-            }
-            for (int j = k; j < k + i; j++)
-            {
-                a[j].parent = n;
-                if (j != k) a[j - 1].right_child = j;
-                if (j == k) a[n].left_child = j;
-                a[j].value = "#";
-            }
-        }*/
-        static int MakeOperation(Tree opers, /*Dictionary<string, int> priority,*/ Dictionary<string, int> vals, Tree[] full)
+    {        
+        
+        static double MakeOperation(Tree opers, Dictionary<string, double> vals, Tree[] full)
         {
             if (op.ContainsKey(opers.value))
             {
@@ -53,11 +18,13 @@ namespace FuntionParser
                     switch (opers.value)
                     {
                         case "+":
-                            return MakeOperation(full[opers.left_child],  vals, full) + MakeOperation(full[opers.right_child],  vals, full);
+                            return MakeOperation(full[opers.left_child], vals, full) + MakeOperation(full[opers.right_child],  vals, full);
                         case "-":
-                            return MakeOperation(full[opers.left_child],  vals, full) - MakeOperation(full[opers.right_child],  vals, full);
+                            return MakeOperation(full[opers.left_child], vals, full) - MakeOperation(full[opers.right_child],  vals, full);
                         case "*":
                             return MakeOperation(full[opers.left_child],  vals, full) * MakeOperation(full[opers.right_child],  vals, full);
+                        case "^":
+                            return Math.Pow(MakeOperation(full[opers.left_child], vals, full), MakeOperation(full[opers.right_child], vals, full));
                         default:
                             throw new ArgumentException("Undefined operator");
                     }
@@ -75,23 +42,62 @@ namespace FuntionParser
             {
                 throw new ArgumentNullException("Empty value");
             }
-        }
-        /*static void GoAroundTheTree(Tree[] opers, Dictionary<string, int> vals)
-        {
-            MakeOperation()
-        }*/
-
-
-
-        //static Operators<char> op = new Operators<char>();
+        }    
+                
         static Dictionary<string, int> op = new Dictionary<string, int>();
+        
+        public static string ReadExpression()
+        {
+            Console.WriteLine("Waiting for your expression...\nFor exit insert 0");
+            string input = Console.ReadLine();
+            return input;
+        }
+
+        public static Dictionary<string, double> ReadVals(List<string> variables)        
+        {
+            Dictionary<string, double> result = new Dictionary<string, double>(); //установим соответствие между именами переменных и их значениями
+            foreach(string variable in variables)
+            {
+                if (!op.ContainsKey(variable) && !result.ContainsKey(variable)) //если не оператор и не считано ранее
+                {
+                    string request = "Значение " + variable + " = ";
+                    Console.Write(request);
+                    result.Add(variable, Double.Parse(Console.ReadLine())); //добавим
+                }
+            }
+            return result;
+        }
+
+        public static List<string> ParseExpression(string expression)
+        {
+            string someChars = "";
+            List<string> result = new List<string>();
+            string last = "1";
+            foreach (char c in expression) //смотрим посимвольно, так как операторы односимвольные
+            {                     
+                if (!op.ContainsKey(c.ToString())) //пока не оператор, будем накапливать имя переменной
+                {
+                    someChars += c;
+                }
+                else
+                {
+                    if (someChars == "") throw new FormatException("Two operators in row"); // если прошлое считывание было оператором, то неверный ввод              
+                    result.Add(someChars); // добавим в список переменную
+                    someChars = "";
+                    someChars += c; // оператор
+                    result.Add(someChars); //добавим оператор
+                    someChars = ""; //подготовили для следующего ввода
+                }
+                last = c.ToString(); // резерв для конца строки
+            }
+            if (op.ContainsKey(last)) throw new FormatException("Last symbol was an operator!"); // если в конце стоял оператор, нас ПОКА ЧТО не устраивает
+            else result.Add(someChars); // если была переменная, добавим
+            return result;
+        }
+
         static void Main(string[] args)
         {
             Tree[] OperationTree = new Tree[100];
-           /* foreach (Tree t in OperationTree)
-            {
-                t.Default();
-            }*/
             op.Add("+", 1);
             op.Add("-", 1);
             op.Add("*", 2);
@@ -99,92 +105,47 @@ namespace FuntionParser
             op.Add("^", 3);
             op.Add("!", 4);
             try
-            {
-                //ReadVals(ParseExpression(ReadExpression()));
+            {                
                 List<string> parsed = ParseExpression(ReadExpression());
-                int i = 0;                
-                bool rightChildExpected = false;                
-                string leftOperand = "";                
-                foreach(string oper in parsed)
-                {                    
-                    if(!op.ContainsKey(oper)) // если не оператор
+                if (parsed.First() != "0")
+                {
+                    int i = 0;
+                    bool rightChildExpected = false;
+                    string leftOperand = "";
+                    foreach (string oper in parsed)
                     {
-                        if (i == 0 || !rightChildExpected) // в начале всегда должна быть переменная, здесь же все левые ветви
+                        if (!op.ContainsKey(oper)) // если не оператор
                         {
-                            leftOperand = oper; // левая ветвь
-                            if (i == 0) OperationTree[1].Init(-1, -1, oper, 0); //если первый элемент
-                            rightChildExpected = true;
-                        }                       
-                    }
-                    else
-                    {
-                        if (i == 1) OperationTree[0].Init(1, 2, oper, -1);
+                            if (i == 0 || !rightChildExpected) // в начале всегда должна быть переменная, здесь же все левые ветви
+                            {
+                                leftOperand = oper; // левая ветвь
+                                if (i == 0) OperationTree[1].Init(-1, -1, oper, 0); //если первый элемент
+                                rightChildExpected = true;
+                            }
+                        }
                         else
                         {
-                            OperationTree[i-1].Init(i, i + 1, oper, i - 3);
-                            OperationTree[i].Init(-1, -1, leftOperand, i - 1);
+                            if (i == 1) OperationTree[0].Init(1, 2, oper, -1);
+                            else
+                            {
+                                OperationTree[i - 1].Init(i, i + 1, oper, i - 3);
+                                OperationTree[i].Init(-1, -1, leftOperand, i - 1);
+                            }
+                            rightChildExpected = false;
                         }
-                        rightChildExpected = false;
+                        i++;
                     }
-                    i++;
-                }
-                OperationTree[i-1].Init(-1, -1, parsed.Last(), i-3);
-                Dictionary<string, int> vals = ReadVals(parsed);
-                int result = MakeOperation(OperationTree[0], vals, OperationTree);
-                Console.WriteLine(result.ToString());
+                    OperationTree[i - 1].Init(-1, -1, parsed.Last(), i - 3); // последний
+                    Dictionary<string, double> vals = ReadVals(parsed); // считываем значения переменных
+                    double result = MakeOperation(OperationTree[0], vals, OperationTree); // запускаем обход дерева от корня
+                    Console.WriteLine(result.ToString()); //вывод результата                    
+                }                
             }
             catch (FormatException ex)
             {
-
-                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.Message);                
             }
             Console.ReadKey();
-        }
-        public static string ReadExpression()
-        {
-            Console.WriteLine("Waiting for your expression...");
-            string input = Console.ReadLine();
-            return input;
-        }
-        public static Dictionary<string, int> ReadVals(List<string> variables)        
-        {
-            Dictionary<string, int> result = new Dictionary<string, int>();
-            foreach(string variable in variables)
-            {
-                if (!op.ContainsKey(variable) && !result.ContainsKey(variable))
-                {
-                    string request = "Значение " + variable + " = ";
-                    Console.Write(request);
-                    result.Add(variable, Int32.Parse(Console.ReadLine()));
-                }
-            }
-            return result;
-        }
-        public static List<string> ParseExpression(string expression)
-        {
-            string someChars = "";
-            List<string> result = new List<string>();
-            string last = "1";
-            foreach (char c in expression)
-            {                     
-                if (!op.ContainsKey(c.ToString()))
-                {
-                    someChars += c;
-                }
-                else
-                {
-                    if (someChars == "") throw new FormatException("Two operators in row");                    
-                    result.Add(someChars);
-                    someChars = "";
-                    someChars += c;
-                    result.Add(someChars);
-                    someChars = "";
-                }
-                last = c.ToString();
-            }
-            if (op.ContainsKey(last)) throw new FormatException("Last symbol was an operator!");
-            else result.Add(someChars);
-            return result;
         }
     }
 }
