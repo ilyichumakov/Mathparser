@@ -21,8 +21,15 @@ namespace FuntionParser
                 this.value = value;
                 this.parent = parent;
             }
+            /*public void Default()
+            {
+                this.left_child = -1;
+                this.right_child = -1;
+                this.parent = -1;
+                this.value = "";
+            }*/
         }
-        static void Create(int n, int i, Tree[] a)
+        /*static void Create(int n, int i, Tree[] a)
         {
             int k = 0;
             for (int j = 0; j < 100; j++)
@@ -36,7 +43,43 @@ namespace FuntionParser
                 if (j == k) a[n].left_child = j;
                 a[j].value = "#";
             }
+        }*/
+        static int MakeOperation(Tree opers, /*Dictionary<string, int> priority,*/ Dictionary<string, int> vals, Tree[] full)
+        {
+            if (op.ContainsKey(opers.value))
+            {
+                if (opers.left_child > 0 && opers.right_child > 0)
+                {
+                    switch (opers.value)
+                    {
+                        case "+":
+                            return MakeOperation(full[opers.left_child],  vals, full) + MakeOperation(full[opers.right_child],  vals, full);
+                        case "-":
+                            return MakeOperation(full[opers.left_child],  vals, full) - MakeOperation(full[opers.right_child],  vals, full);
+                        case "*":
+                            return MakeOperation(full[opers.left_child],  vals, full) * MakeOperation(full[opers.right_child],  vals, full);
+                        default:
+                            throw new ArgumentException("Undefined operator");
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException("Operation has no argument(s)");
+                }
+            }
+            else if(opers.value!="")
+            {
+                return vals[opers.value];
+            }
+            else
+            {
+                throw new ArgumentNullException("Empty value");
+            }
         }
+        /*static void GoAroundTheTree(Tree[] opers, Dictionary<string, int> vals)
+        {
+            MakeOperation()
+        }*/
 
 
 
@@ -45,6 +88,10 @@ namespace FuntionParser
         static void Main(string[] args)
         {
             Tree[] OperationTree = new Tree[100];
+           /* foreach (Tree t in OperationTree)
+            {
+                t.Default();
+            }*/
             op.Add("+", 1);
             op.Add("-", 1);
             op.Add("*", 2);
@@ -55,11 +102,9 @@ namespace FuntionParser
             {
                 //ReadVals(ParseExpression(ReadExpression()));
                 List<string> parsed = ParseExpression(ReadExpression());
-                int i = 0;
-                //bool operatorExpected = false;
+                int i = 0;                
                 bool rightChildExpected = false;                
-                string leftOperand = "";
-                //string rightOperand = "";
+                string leftOperand = "";                
                 foreach(string oper in parsed)
                 {                    
                     if(!op.ContainsKey(oper)) // если не оператор
@@ -68,18 +113,8 @@ namespace FuntionParser
                         {
                             leftOperand = oper; // левая ветвь
                             if (i == 0) OperationTree[1].Init(-1, -1, oper, 0); //если первый элемент
-                            /*else //не первый, но левая ветвь
-                            {
-                                OperationTree[i].Init(-1, -1, oper, i-1);
-                            }*/
                             rightChildExpected = true;
-
-                        }
-                        /*else if (rightChildExpected) // если правая ветвь
-                        {
-                            rightOperand = oper; //правая ветвь
-                            OperationTree[i].Init(-1, -1, oper, i + 1);
-                        }*/
+                        }                       
                     }
                     else
                     {
@@ -94,6 +129,9 @@ namespace FuntionParser
                     i++;
                 }
                 OperationTree[i-1].Init(-1, -1, parsed.Last(), i-3);
+                Dictionary<string, int> vals = ReadVals(parsed);
+                int result = MakeOperation(OperationTree[0], vals, OperationTree);
+                Console.WriteLine(result.ToString());
             }
             catch (FormatException ex)
             {
@@ -108,14 +146,17 @@ namespace FuntionParser
             string input = Console.ReadLine();
             return input;
         }
-        public static List<string> ReadVals(List<string> variables)        
+        public static Dictionary<string, int> ReadVals(List<string> variables)        
         {
-            List<string> result = new List<string>();
+            Dictionary<string, int> result = new Dictionary<string, int>();
             foreach(string variable in variables)
             {
-                string request = "Значение " + variable + " = ";
-                Console.Write(request);
-                result.Add(Console.ReadLine());
+                if (!op.ContainsKey(variable) && !result.ContainsKey(variable))
+                {
+                    string request = "Значение " + variable + " = ";
+                    Console.Write(request);
+                    result.Add(variable, Int32.Parse(Console.ReadLine()));
+                }
             }
             return result;
         }
