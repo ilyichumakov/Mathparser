@@ -79,6 +79,7 @@ namespace FuntionParser
 
         public static List<string> ParseExpression(string expression)
         {
+            Priorities.Clear();
             string someChars = "";
             List<string> result = new List<string>();
             string last = "1";
@@ -140,60 +141,139 @@ namespace FuntionParser
             return parsed;
         }
 
+        public static string MergeParsed(List<string> parsed) // сливаем компоненту выражения
+        {
+            string res = "";
+            foreach(string s in parsed)
+            {
+                res += s;
+            }
+            return res;
+        }
+
+        public static int FindFreeIndex(Tree[] OperationTree)
+        {
+            for(int i = 0; i < OperationTree.Length; i++)                
+            {
+                Tree node = OperationTree[i];
+                if (node.parent == 0 && node.left_child == 0 && node.right_child == 0) return i;
+            }
+            return -1;
+        }
+
         static void Main(string[] args)
         {
             Tree[] OperationTree = new Tree[100];
             op.Clear();
-            Priorities.Clear();
+           // Priorities.Clear();
             op.Add("+", 6);
             op.Add("-", 5);
             op.Add("*", 3);
             op.Add("/", 4);
             op.Add("^", 2);
             op.Add("!", 1);
-            try
-            {                
-                List<string> parsed = ParseExpression(ReadExpression());
-                parsed = SortOperators(parsed, Priorities, op);
-                if (parsed.First() != "0")
+            bool end = false;
+            while (!end)
+            {
+                try
                 {
-                    int i = 0;
-                    bool rightChildExpected = false;
-                    string leftOperand = "";
-                    foreach (string oper in parsed)
+                    string input = ReadExpression();
+                    List<string> parsed = ParseExpression(input);
+                    parsed = SortOperators(parsed, Priorities, op);
+                    if (parsed.First() != "0")
                     {
-                        if (!op.ContainsKey(oper)) // если не оператор
+                        int i = 0;
+                        bool rightChildExpected = false;
+                        string leftOperand = "";
+
+
+                        /*foreach (string oper in parsed)  //old but works, no priority
                         {
-                            if (i == 0 || !rightChildExpected) // в начале всегда должна быть переменная, здесь же все левые ветви
+                            if (!op.ContainsKey(oper)) // если не оператор
                             {
-                                leftOperand = oper; // левая ветвь
-                                if (i == 0) OperationTree[1].Init(-1, -1, oper, 0); //если первый элемент
-                                rightChildExpected = true;
+                                if (i == 0 || !rightChildExpected) // в начале всегда должна быть переменная, здесь же все левые ветви
+                                {
+                                    leftOperand = oper; // левая ветвь
+                                    if (i == 0) OperationTree[1].Init(-1, -1, oper, 0); //если первый элемент
+                                    rightChildExpected = true;
+                                }
                             }
-                        }
-                        else
-                        {
-                            if (i == 1) OperationTree[0].Init(1, 2, oper, -1);
                             else
                             {
-                                OperationTree[i - 1].Init(i, i + 1, oper, i - 3);
-                                OperationTree[i].Init(-1, -1, leftOperand, i - 1);
+                                if (i == 1) OperationTree[0].Init(1, 2, oper, -1);
+                                else
+                                {
+                                    OperationTree[i - 1].Init(i, i + 1, oper, i - 3);
+                                    OperationTree[i].Init(-1, -1, leftOperand, i - 1);
+                                }
+                                rightChildExpected = false;
                             }
-                            rightChildExpected = false;
+                            i++;
                         }
-                        i++;
+                        OperationTree[i - 1].Init(-1, -1, parsed.Last(), i - 3); // последний*/
+
+
+
+                        //with priority
+                        //int maxPriority = Priorities.Max();
+                        bool decomposed = false;
+                        OperationTree[0].Init(-1, -1, input, -1);
+                        while (!decomposed)
+                        {
+                            bool foundMax = false;
+                            string right = "";
+                            string left = "";
+                            string maxOp = "";
+                            if (OperationTree[i].value == null)
+                            {
+                                decomposed = true;
+                                continue;
+                            }
+                            List<string> node = ParseExpression(OperationTree[i].value);
+                            if (node.Count > 1)
+                            {
+                                int maxPriority = Priorities.Max();
+                                for (int j = 0; j < node.Count; j++)
+                                {
+                                    string oper = node[j];
+                                    if (op.ContainsKey(oper) && op[oper] == maxPriority && !foundMax)
+                                    {
+                                        foundMax = true;
+                                        maxOp = oper;
+                                    }
+                                    else
+                                    {
+                                        if (foundMax) right += oper;
+                                        else left += oper;
+                                    }
+                                }
+                                int freeCell = FindFreeIndex(OperationTree);
+                                if (freeCell > -1)
+                                {
+                                    OperationTree[i].Init(freeCell, freeCell + 1, maxOp, OperationTree[i].parent);
+                                    OperationTree[freeCell].Init(-1, -1, left, i);
+                                    OperationTree[freeCell+1].Init(-1, -1, right, i);
+                                }
+                                decomposed = false;
+                            }
+                            i++;
+                        }
+                       
+
+
+                       
+                        Dictionary<string, double> vals = ReadVals(parsed); // считываем значения переменных
+                        double result = MakeOperation(OperationTree[0], vals, OperationTree); // запускаем обход дерева от корня
+                        Console.WriteLine(result.ToString()); //вывод результата                    
                     }
-                    OperationTree[i - 1].Init(-1, -1, parsed.Last(), i - 3); // последний
-                    Dictionary<string, double> vals = ReadVals(parsed); // считываем значения переменных
-                    double result = MakeOperation(OperationTree[0], vals, OperationTree); // запускаем обход дерева от корня
-                    Console.WriteLine(result.ToString()); //вывод результата                    
-                }                
+                    else end = true;
+                }
+                catch (FormatException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                //Console.ReadKey();
             }
-            catch (FormatException ex)
-            {
-                Console.WriteLine(ex.Message);                
-            }
-            Console.ReadKey();
         }
     }
 }

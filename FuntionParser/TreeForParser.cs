@@ -18,7 +18,6 @@ namespace FuntionParser
             this.right_child = right_child;
             this.value = value;
             this.parent = parent;
-        }
-
+        }        
     }
 }
