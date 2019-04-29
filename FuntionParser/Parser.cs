@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace FuntionParser
 {
-    class Program
-    {    
-        /*
-        static double MakeOperation(Tree opers, Dictionary<string, double> vals, Tree[] full)
+    public class Parser
+    {
+        private double MakeOperation(Tree opers, Dictionary<string, double> vals, Tree[] full)
         {
             if (op.ContainsKey(opers.value))
             {
@@ -18,11 +17,11 @@ namespace FuntionParser
                     switch (opers.value)
                     {
                         case "+":
-                            return MakeOperation(full[opers.left_child], vals, full) + MakeOperation(full[opers.right_child],  vals, full);
+                            return MakeOperation(full[opers.left_child], vals, full) + MakeOperation(full[opers.right_child], vals, full);
                         case "-":
-                            return MakeOperation(full[opers.left_child], vals, full) - MakeOperation(full[opers.right_child],  vals, full);
+                            return MakeOperation(full[opers.left_child], vals, full) - MakeOperation(full[opers.right_child], vals, full);
                         case "*":
-                            return MakeOperation(full[opers.left_child],  vals, full) * MakeOperation(full[opers.right_child],  vals, full);
+                            return MakeOperation(full[opers.left_child], vals, full) * MakeOperation(full[opers.right_child], vals, full);
                         case "/":
                             return MakeOperation(full[opers.left_child], vals, full) / MakeOperation(full[opers.right_child], vals, full);
                         case "^":
@@ -36,7 +35,7 @@ namespace FuntionParser
                     throw new InvalidOperationException("Operation has no argument(s)");
                 }
             }
-            else if(opers.value!="")
+            else if (opers.value != "")
             {
                 return vals[opers.value];
             }
@@ -44,10 +43,10 @@ namespace FuntionParser
             {
                 throw new ArgumentNullException("Empty value");
             }
-        }    
-                
-        static Dictionary<string, int> op = new Dictionary<string, int>(); //соответствия операций и приоритетов
-        
+        }
+
+        private Dictionary<string, int> op = new Dictionary<string, int>(); //соответствия операций и приоритетов
+
         public static string ReadExpression()
         {
             Console.WriteLine("Waiting for your expression...\nFor exit insert 0");
@@ -55,10 +54,10 @@ namespace FuntionParser
             return input;
         }
 
-        public static Dictionary<string, double> ReadVals(List<string> variables)        
+        public Dictionary<string, double> ReadVals(List<string> variables)
         {
             Dictionary<string, double> result = new Dictionary<string, double>(); //установим соответствие между именами переменных и их значениями
-            foreach(string variable in variables)
+            foreach (string variable in variables)
             {
                 bool isNumber = Double.TryParse(variable, out double number);
                 if (!op.ContainsKey(variable) && !result.ContainsKey(variable) && !isNumber) //если не оператор, не считано ранее и не число
@@ -67,7 +66,7 @@ namespace FuntionParser
                     Console.Write(request);
                     result.Add(variable, Double.Parse(Console.ReadLine())); //добавим
                 }
-                else if(isNumber) // если число
+                else if (isNumber) // если число
                 {
                     result.Add(variable, number); //добавим
                 }
@@ -75,9 +74,9 @@ namespace FuntionParser
             return result;
         }
 
-        public static List<int> Priorities = new List<int>(); // список приоритетов внесенных операций
+        private static List<int> Priorities = new List<int>(); // список приоритетов внесенных операций
 
-        public static List<string> ParseExpression(string expression)
+        public List<string> ParseExpression(string expression)
         {
             Priorities.Clear();
             //op.Clear();
@@ -85,7 +84,7 @@ namespace FuntionParser
             List<string> result = new List<string>();
             string last = "1";
             foreach (char c in expression) //смотрим посимвольно, так как операторы односимвольные
-            {                     
+            {
                 if (!op.ContainsKey(c.ToString())) //пока не оператор, будем накапливать имя переменной
                 {
                     someChars += c;
@@ -107,19 +106,19 @@ namespace FuntionParser
             return result;
         }
 
-        public static List<string> SortOperators(List<string> parsed, List<int> priorities, Dictionary<string, int> op)
+        private List<string> SortOperators(List<string> parsed)
         {
             bool sorted = false;
             while (!sorted)
             {
                 int curOperator = 0;
                 int i = 0;
-                while(i<parsed.Count)
+                while (i < parsed.Count)
                 {
                     string s = parsed[i];
                     if (op.ContainsKey(s) && curOperator > 0)
                     {
-                        if (priorities[curOperator] > priorities[curOperator - 1])
+                        if (Priorities[curOperator] > Priorities[curOperator - 1])
                         {
                             string tempStr = s;
                             parsed[i] = parsed[i - 2];
@@ -128,8 +127,8 @@ namespace FuntionParser
                             parsed[i + 1] = parsed[i - 1];
                             parsed[i - 1] = tempStr;
                             i = -1;
-                            int changePriority = priorities[curOperator];
-                            priorities[curOperator] = priorities[curOperator - 1];
+                            int changePriority = Priorities[curOperator];
+                            Priorities[curOperator] = Priorities[curOperator - 1];
                             sorted = false;
                             curOperator = 0;
                         }
@@ -142,19 +141,19 @@ namespace FuntionParser
             return parsed;
         }
 
-        public static string MergeParsed(List<string> parsed) // сливаем компоненту выражения
+        private static string MergeParsed(List<string> parsed) // сливаем компоненту выражения
         {
             string res = "";
-            foreach(string s in parsed)
+            foreach (string s in parsed)
             {
                 res += s;
             }
             return res;
         }
 
-        public static int FindFreeIndex(Tree[] OperationTree)
+        private static int FindFreeIndex(Tree[] OperationTree)
         {
-            for(int i = 0; i < OperationTree.Length; i++)                
+            for (int i = 0; i < OperationTree.Length; i++)
             {
                 Tree node = OperationTree[i];
                 if (node.parent == 0 && node.left_child == 0 && node.right_child == 0) return i;
@@ -162,18 +161,11 @@ namespace FuntionParser
             return -1;
         }
 
-        public static double ProceedParse(string expression, Dictionary<string, double> vals)
+        public double ProceedParse(string expression, Dictionary<string, double> vals)
         {
-            Tree[] OperationTree = new Tree[100];
-            op.Clear();
-            op.Add("+", 6);
-            op.Add("-", 5);
-            op.Add("*", 3);
-            op.Add("/", 4);
-            op.Add("^", 2);
-            op.Add("!", 1);
+            Tree[] OperationTree = new Tree[100];            
             List<string> parsed = ParseExpression(expression);
-            parsed = SortOperators(parsed, Priorities, op);            
+            parsed = SortOperators(parsed);
             int i = 0;
             bool decomposed = false;
             OperationTree[0].Init(-1, -1, expression, -1);
@@ -216,42 +208,14 @@ namespace FuntionParser
                     decomposed = false;
                 }
                 i++;
-            }               
+            }
             double result = MakeOperation(OperationTree[0], vals, OperationTree); // запускаем обход дерева от корня
             return result;
         }
-        */
-        static void Main(string[] args)
-        {           
-            
-            bool end = false;
-            Dictionary<string, int> op = new Dictionary<string, int>();            
-            op.Add("+", 6);
-            op.Add("-", 5);
-            op.Add("*", 3);
-            op.Add("/", 4);
-            op.Add("^", 2);
-            op.Add("!", 1);
-            Parser Prs = new Parser(op);
-            while (!end)
-            {
-                try
-                {                   
-                    string input = Parser.ReadExpression();
-                    List<string> parsed = Prs.ParseExpression(input);
-                    if (parsed.First() != "0")
-                    {
-                        Dictionary<string, double> vals = Prs.ReadVals(parsed); // считываем значения переменных
-                        double result = Prs.ProceedParse(input, vals); // запускаем обход дерева от корня
-                        Console.WriteLine(result.ToString()); //вывод результата    
-                    }
-                    else end = true; 
-                }
-                catch (FormatException ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-            }
+
+        public Parser(Dictionary<string, int> opers)
+        {
+            op = opers;
         }
     }
 }
