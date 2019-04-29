@@ -161,76 +161,83 @@ namespace FuntionParser
             return -1;
         }
 
-        static void Main(string[] args)
-        {           
+        public static double ProceedParse(string expression, Dictionary<string, double> vals)
+        {
+            Tree[] OperationTree = new Tree[100];
+            op.Clear();
             op.Add("+", 6);
             op.Add("-", 5);
             op.Add("*", 3);
             op.Add("/", 4);
             op.Add("^", 2);
             op.Add("!", 1);
+            List<string> parsed = ParseExpression(expression);
+            parsed = SortOperators(parsed, Priorities, op);            
+            int i = 0;
+            bool decomposed = false;
+            OperationTree[0].Init(-1, -1, expression, -1);
+            while (!decomposed)
+            {
+                bool foundMax = false;
+                string right = "";
+                string left = "";
+                string maxOp = "";
+                if (OperationTree[i].value == null)
+                {
+                    decomposed = true;
+                    continue;
+                }
+                List<string> node = ParseExpression(OperationTree[i].value);
+                if (node.Count > 1)
+                {
+                    int maxPriority = Priorities.Max();
+                    for (int j = 0; j < node.Count; j++)
+                    {
+                        string oper = node[j];
+                        if (op.ContainsKey(oper) && op[oper] == maxPriority && !foundMax)
+                        {
+                            foundMax = true;
+                            maxOp = oper;
+                        }
+                        else
+                        {
+                            if (foundMax) right += oper;
+                            else left += oper;
+                        }
+                    }
+                    int freeCell = FindFreeIndex(OperationTree);
+                    if (freeCell > -1)
+                    {
+                        OperationTree[i].Init(freeCell, freeCell + 1, maxOp, OperationTree[i].parent);
+                        OperationTree[freeCell].Init(-1, -1, left, i);
+                        OperationTree[freeCell + 1].Init(-1, -1, right, i);
+                    }
+                    decomposed = false;
+                }
+                i++;
+            }               
+            double result = MakeOperation(OperationTree[0], vals, OperationTree); // запускаем обход дерева от корня
+            return result;
+        }
+
+        static void Main(string[] args)
+        {           
+            
             bool end = false;
 
             while (!end)
             {
                 try
-                {
-                    Tree[] OperationTree = new Tree[100];
+                {                   
                     string input = ReadExpression();
                     List<string> parsed = ParseExpression(input);
-                    parsed = SortOperators(parsed, Priorities, op);
                     if (parsed.First() != "0")
                     {
-                        int i = 0;
-                                                                        
-                        bool decomposed = false;
-                        OperationTree[0].Init(-1, -1, input, -1);
-                        while (!decomposed)
-                        {
-                            bool foundMax = false;
-                            string right = "";
-                            string left = "";
-                            string maxOp = "";
-                            if (OperationTree[i].value == null)
-                            {
-                                decomposed = true;
-                                continue;
-                            }
-                            List<string> node = ParseExpression(OperationTree[i].value);
-                            if (node.Count > 1)
-                            {
-                                int maxPriority = Priorities.Max();
-                                for (int j = 0; j < node.Count; j++)
-                                {
-                                    string oper = node[j];
-                                    if (op.ContainsKey(oper) && op[oper] == maxPriority && !foundMax)
-                                    {
-                                        foundMax = true;
-                                        maxOp = oper;
-                                    }
-                                    else
-                                    {
-                                        if (foundMax) right += oper;
-                                        else left += oper;
-                                    }
-                                }
-                                int freeCell = FindFreeIndex(OperationTree);
-                                if (freeCell > -1)
-                                {
-                                    OperationTree[i].Init(freeCell, freeCell + 1, maxOp, OperationTree[i].parent);
-                                    OperationTree[freeCell].Init(-1, -1, left, i);
-                                    OperationTree[freeCell+1].Init(-1, -1, right, i);
-                                }
-                                decomposed = false;
-                            }
-                            i++;
-                        }
-                                              
                         Dictionary<string, double> vals = ReadVals(parsed); // считываем значения переменных
-                        double result = MakeOperation(OperationTree[0], vals, OperationTree); // запускаем обход дерева от корня
-                        Console.WriteLine(result.ToString()); //вывод результата                    
+                        double result = ProceedParse(input, vals); // запускаем обход дерева от корня
+                        Console.WriteLine(result.ToString()); //вывод результата    
                     }
-                    else end = true;
+                    else end = true; 
                 }
                 catch (FormatException ex)
                 {

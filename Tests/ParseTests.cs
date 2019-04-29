@@ -24,6 +24,7 @@ namespace Tests
             vals.Add("x", 5);
             vals.Add("y", 2);
             double expected = 7;
+            double actual = 
         }
     }
 }
