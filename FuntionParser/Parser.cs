@@ -78,8 +78,7 @@ namespace FuntionParser
 
         public List<string> ParseExpression(string expression)
         {
-            Priorities.Clear();
-            //op.Clear();
+            Priorities.Clear();            
             string someChars = "";
             List<string> result = new List<string>();
             string last = "1";
