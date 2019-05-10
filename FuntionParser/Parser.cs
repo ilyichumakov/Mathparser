@@ -80,15 +80,27 @@ namespace FuntionParser
         {
             Priorities.Clear();            
             string someChars = "";
+            int brackets = 0;
             List<string> result = new List<string>();
             string last = "1";
             foreach (char c in expression) //смотрим посимвольно, так как операторы односимвольные
             {
-                if (!op.ContainsKey(c.ToString())) //пока не оператор, будем накапливать имя переменной
+                if (c == '(')
+                {
+                    brackets++;//глубина скобок возрастает
+                    if (brackets == 1) continue;
+                }
+                if (c == ')') brackets--; //глубина убывает
+                if (brackets < 0) throw new FormatException("A closing bracket caught when not expected");
+                if ((!op.ContainsKey(c.ToString()) || brackets > 0) && !(c == ')' && brackets == 0)) //пока не оператор, будем накапливать имя переменной
                 {
                     someChars += c;
                 }
-                else
+                else if(c == ')' && brackets == 0)
+                {
+                   
+                }
+                else /*if (brackets == 0)*/
                 {
                     if (someChars == "") throw new FormatException("Two operators in row"); // если прошлое считывание было оператором, то неверный ввод              
                     result.Add(someChars); // добавим в список переменную
@@ -101,6 +113,7 @@ namespace FuntionParser
                 last = c.ToString(); // резерв для конца строки
             }
             if (op.ContainsKey(last)) throw new FormatException("Last symbol was an operator!"); // если в конце стоял оператор, нас ПОКА ЧТО не устраивает
+            if (brackets > 0) throw new FormatException("Too much opening brackets");
             else result.Add(someChars); // если была переменная, добавим            
             return result;
         }
