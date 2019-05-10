@@ -25,7 +25,7 @@ namespace FuntionParser
                 {                   
                     string input = Parser.ReadExpression();
                     List<string> parsed = Prs.ParseExpression(input);
-                    if (parsed.First() != "0")
+                    if (parsed.First() != "exit")
                     {
                         Dictionary<string, double> vals = Prs.ReadVals(parsed); // считываем значения переменных
                         double result = Prs.ProceedParse(input, vals); // запускаем обход дерева от корня

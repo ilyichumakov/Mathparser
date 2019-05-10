@@ -95,5 +95,14 @@ namespace Tests
             double actual = Prs.ProceedParse(expression, vals);
             Assert.AreEqual(expected, actual);
         }
+
+        [Test]
+        public void IWantBrackets()
+        {
+            string expression = "(2-x)";
+            List<string> actual = Prs.ParseExpression(expression);
+            List<string> expected = new List<string>() { "2", "-", "x" };
+            Assert.AreEqual(expected, actual);
+        }
     }
 }

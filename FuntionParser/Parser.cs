@@ -49,7 +49,7 @@ namespace FuntionParser
 
         public static string ReadExpression()
         {
-            Console.WriteLine("Waiting for your expression...\nFor exit insert 0");
+            Console.WriteLine("Waiting for your expression...\nFor exit insert 'exit'");
             string input = Console.ReadLine();
             return input;
         }
@@ -88,11 +88,11 @@ namespace FuntionParser
                 if (c == '(')
                 {
                     brackets++;//глубина скобок возрастает
-                    if (brackets == 1) continue;
+                    //if (brackets == 1) continue;
                 }
                 if (c == ')') brackets--; //глубина убывает
                 if (brackets < 0) throw new FormatException("A closing bracket caught when not expected");
-                if ((!op.ContainsKey(c.ToString()) || brackets > 0) && !(c == ')' && brackets == 0)) //пока не оператор, будем накапливать имя переменной
+                if ((!op.ContainsKey(c.ToString()) || brackets > 0)/* && !(c == ')' && brackets == 0)*/) //пока не оператор, будем накапливать имя переменной
                 {
                     someChars += c;
                 }
@@ -114,7 +114,14 @@ namespace FuntionParser
             }
             if (op.ContainsKey(last)) throw new FormatException("Last symbol was an operator!"); // если в конце стоял оператор, нас ПОКА ЧТО не устраивает
             if (brackets > 0) throw new FormatException("Too much opening brackets");
-            else result.Add(someChars); // если была переменная, добавим            
+            else result.Add(someChars); // если была переменная, добавим  
+            if(result.Count == 1 && result.First()[0] == '(')
+            {
+                string correct = result.First();
+                result.Clear();
+                correct = correct.Substring(1, correct.Length-2);
+                result=ParseExpression(correct);
+            }
             return result;
         }
 
