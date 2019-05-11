@@ -57,19 +57,43 @@ namespace FuntionParser
         public Dictionary<string, double> ReadVals(List<string> variables)
         {
             Dictionary<string, double> result = new Dictionary<string, double>(); //установим соответствие между именами переменных и их значениями
-            foreach (string variable in variables)
+            /*foreach (string variable in variables)*/
+            while(variables.Count>0)
             {
-                bool isNumber = Double.TryParse(variable, out double number);
-                if (!op.ContainsKey(variable) && !result.ContainsKey(variable) && !isNumber) //если не оператор, не считано ранее и не число
+                string variable = variables.First();
+                List<string> check = new List<string>();
+                if (!op.ContainsKey(variable))
                 {
-                    string request = "Значение " + variable + " = ";
-                    Console.Write(request);
-                    result.Add(variable, Double.Parse(Console.ReadLine())); //добавим
+                    check = ParseExpression(variable);
                 }
-                else if (isNumber) // если число
+                else
                 {
-                    result.Add(variable, number); //добавим
+                    check.Add(variable);
                 }
+                if (check.Count == 1)
+                {
+                    bool isNumber = Double.TryParse(variable, out double number);
+                    if (!op.ContainsKey(variable) && !result.ContainsKey(variable) && !isNumber) //если не оператор, не считано ранее и не число
+                    {
+                        string request = "Значение " + variable + " = ";
+                        Console.Write(request);
+                        result.Add(variable, Double.Parse(Console.ReadLine())); //добавим
+                    }
+                    else if (isNumber) // если число
+                    {
+                        result.Add(variable, number); //добавим
+                    }
+                }
+                else
+                {
+                    //result.Concat(ReadVals(check));
+                    //result.Union(ReadVals(check));
+                    foreach(string elem in check)
+                    {
+                        variables.Add(elem);
+                    }
+                }
+                variables.RemoveAt(0);
             }
             return result;
         }

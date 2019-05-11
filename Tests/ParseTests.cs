@@ -104,5 +104,31 @@ namespace Tests
             List<string> expected = new List<string>() { "2", "-", "x" };
             Assert.AreEqual(expected, actual);
         }
+
+        [Test]
+        public void IHaveBrackets()
+        {
+            string expression = "x+y*(2-x)";
+            vals.Add("x", 1);
+            vals.Add("y", 5);
+            vals.Add("2", 2);
+            double expected = 6;
+            double actual = Prs.ProceedParse(expression, vals);
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test]
+        public void DeepBrackets()
+        {
+            string expression = "((x-y*z)*4+2)*x";
+            vals.Add("x", 2);
+            vals.Add("y", 4);
+            vals.Add("z", 5);
+            vals.Add("2", 2);
+            vals.Add("4", 4);
+            double expected = -140;
+            double actual = Prs.ProceedParse(expression, vals);
+            Assert.AreEqual(expected, actual);
+        }
     }
 }
