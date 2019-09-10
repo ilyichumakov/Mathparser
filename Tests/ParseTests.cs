@@ -130,5 +130,41 @@ namespace Tests
             double actual = Prs.ProceedParse(expression, vals);
             Assert.AreEqual(expected, actual);
         }
+
+        [Test]
+        public void MissingBracket()
+        {
+            string expression = "((x-y*z*4+2)*x";
+            vals.Add("x", 2);
+            vals.Add("y", 4);
+            vals.Add("z", 5);
+            vals.Add("2", 2);
+            vals.Add("4", 4);
+            Assert.Throws<FormatException>(()=>Prs.ProceedParse(expression, vals));
+        }
+
+        [Test]
+        public void MissingArgument()
+        {
+            string expression = "x-y*z*4+2*";
+            vals.Add("x", 2);
+            vals.Add("y", 4);
+            vals.Add("z", 5);
+            vals.Add("2", 2);
+            vals.Add("4", 4);
+            Assert.Throws<FormatException>(() => Prs.ProceedParse(expression, vals));
+        }
+
+        [Test]
+        public void WrongBrackets()
+        {
+            string expression = "((x-y*z*4+)2*x";
+            vals.Add("x", 2);
+            vals.Add("y", 4);
+            vals.Add("z", 5);
+            vals.Add("2", 2);
+            vals.Add("4", 4);
+            Assert.Throws<FormatException>(() => Prs.ProceedParse(expression, vals));
+        }
     }
 }

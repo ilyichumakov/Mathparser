@@ -184,7 +184,7 @@ namespace FuntionParser
             return parsed;
         }
 
-        private static string MergeParsed(List<string> parsed) // сливаем компоненту выражения
+       /* private static string MergeParsed(List<string> parsed) // сливаем компоненту выражения
         {
             string res = "";
             foreach (string s in parsed)
@@ -192,7 +192,7 @@ namespace FuntionParser
                 res += s;
             }
             return res;
-        }
+        }*/
 
         private static int FindFreeIndex(Tree[] OperationTree)
         {
