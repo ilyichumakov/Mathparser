@@ -79,7 +79,7 @@ namespace FuntionParser
                         Console.Write(request);
                         result.Add(variable, Double.Parse(Console.ReadLine())); //добавим
                     }
-                    else if (isNumber) // если число
+                    else if (isNumber && !result.ContainsKey(variable)) // если число
                     {
                         result.Add(variable, number); //добавим
                     }
